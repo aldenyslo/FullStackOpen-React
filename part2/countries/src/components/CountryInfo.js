@@ -2,7 +2,7 @@ const CountryInfo = ({country}) => {
     return (
         <div>
             <h1>{country.name.common}</h1>
-            <p>capital {country.capital[0]}</p>
+            <p>capital {country.capital.join(", ")}</p>
             <p>area {country.area}</p>
             <h3>languages:</h3>
             <ul>

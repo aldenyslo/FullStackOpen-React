@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import countryService from "./services/countries"
+import weatherService from "./services/weather"
 import Search from "./components/Search"
 import Countries from "./components/Countries"
 
@@ -15,16 +16,22 @@ function App() {
       })
   }, [])
 
+  const countriesToShow = countries.filter(country => country.name.common.toUpperCase().includes(newSearch.toUpperCase()))
+
+
   const handleSearch = (e) => {
     setNewSearch(e.target.value)
   }
 
-  const countriesToShow = countries.filter(country => country.name.common.toUpperCase().includes(newSearch.toUpperCase()))
+  const handleShow = (name) => {
+    setNewSearch(name);
+  }
+
 
   return (
     <div>
       <Search value={newSearch} changeHandler={handleSearch} />
-      <Countries countries={countriesToShow} />
+      <Countries countries={countriesToShow} showHandler={handleShow} />
     </div>
   )
 }
