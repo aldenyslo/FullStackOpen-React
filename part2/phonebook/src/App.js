@@ -1,17 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import personService from "./services/persons"
 import Filter from "./components/Filter"
 import Persons from "./components/Persons"
 import PersonForm from "./components/PersonForm"
 
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: "040-1234567", id: 1 },
-    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 }
-  ]) 
+  const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState("")
   const [newFilter, setNewFilter] = useState("")
+
+  useEffect(() => {
+    personService
+      .getAll()
+      .then(initialPersons => {
+        setPersons(initialPersons)
+      })
+  }, [])
 
 
   const handleNameChange = (e) => {
@@ -25,22 +31,33 @@ const App = () => {
   const addInfo = (e) => {
     e.preventDefault();
 
-    for (const person of persons) {
-      if (person.name === newName) {
-        window.alert(`${newName} is already added to phonebook`)
+    const person = persons.find(person => person.name === newName);
+
+    if (person) {
+      if (window.confirm(`${newName} is already added to the phonebook, replace the old number with a new one?`)) {
+        const changedPerson = {...person, number: newNum}
+
+        personService
+          .update(person.id, changedPerson)
+          .then(returnedPerson => {
+            setPersons(persons.map(p => p.id !== person.id ? p : returnedPerson))
+          })
         return
       }
     }
 
-    const nameObject = {
+    const personObject = {
       name: newName,
-      number: newNum,
-      id: persons.length + 1
+      number: newNum
     }
 
-    setPersons(persons.concat(nameObject));
-    setNewName("")
-    setNewNum("")
+    personService
+      .create(personObject)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson));
+        setNewName("")
+        setNewNum("")
+      })
   }
 
   const handleFilter = (e) => {
@@ -49,6 +66,17 @@ const App = () => {
 
   const personsToShow = persons.filter(person => person.name.toUpperCase().includes(newFilter.toUpperCase()));
 
+  const deletePerson = (id) => {
+    if (window.confirm(`Delete ${persons.find(person => person.id === id).name}?`)) {
+
+      personService
+        .remove(id)
+        .then(() => {
+          setPersons(persons.filter(person => person.id !== id))
+        })
+    }
+  }
+
   return (
     <div>
       <h2>Phonebook</h2>
@@ -56,7 +84,7 @@ const App = () => {
       <h3>Add a new</h3>
       <PersonForm submitHandler={addInfo} name={newName} nameChangeHandler={handleNameChange} num={newNum} numChangeHandler={handleNumChange} />
       <h3>Numbers</h3>
-      <Persons persons={personsToShow} />
+      <Persons persons={personsToShow} deleteHandler={deletePerson} />
     </div>
   )
 }
